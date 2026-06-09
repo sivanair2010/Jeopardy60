@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sarma &amp; Padma's 60th Anniversary Jeopardy!</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23060CE9'/%3E%3Ctext x='32' y='50' font-family='Arial Black,Arial' font-size='46' font-weight='bold' text-anchor='middle' fill='%23FFCC00' transform='skewX(-6 0 0)'%3EJ%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23060CE9'/%3E%3Ctext x='32' y='50' font-family='Arial Black,Arial' font-size='46' font-weight='bold' text-anchor='middle' fill='%23FFCC00'%3EJ%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --tile-blue:#0b1fc9;
+    --gold:#D4A45E;
+    --light-gold:#FFCC00;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;width:100%;}
+  body{
+    background:#000;
+    font-family:'Arial Black','Arial',sans-serif;
+    color:#fff;
+    overflow:hidden;
+    user-select:none;
+    -webkit-user-select:none;
+  }
+  .screen{position:fixed;inset:0;display:none;}
+  .screen.active{display:flex;}
+
+  /* ---------- TITLE ---------- */
+  #title{
+    flex-direction:column;align-items:center;justify-content:center;text-align:center;
+    background:radial-gradient(circle at center,#0a18d0 0%,#03065e 70%,#000 100%);
+  }
+  #title h1{
+    font-size:13vw;color:var(--light-gold);
+    text-shadow:7px 7px 0 #000,0 0 35px rgba(255,204,0,.4);
+    font-family:'Impact','Arial Black',sans-serif;line-height:.9;transform:skewX(-5deg);
+  }
+  #title .sub{
+    margin-top:3vh;font-size:3.2vw;color:#fff;letter-spacing:.08em;
+    text-transform:uppercase;text-shadow:3px 3px 0 #000;
+  }
+  .btn{
+    background:linear-gradient(#1830ff,#060CE9);color:var(--light-gold);
+    border:4px solid var(--gold);border-radius:10px;cursor:pointer;
+    text-transform:uppercase;letter-spacing:.05em;font-family:'Arial Black',sans-serif;
+    box-shadow:0 6px 0 #03065e,0 10px 20px rgba(0,0,0,.6);transition:transform .08s,box-shadow .08s;
+  }
+  .btn:hover{transform:translateY(2px);box-shadow:0 4px 0 #03065e,0 8px 16px rgba(0,0,0,.6);}
+  .btn:active{transform:translateY(6px);box-shadow:0 0 0 #03065e;}
+  #title .btn{margin-top:6vh;padding:1.6vh 4vw;font-size:2.6vw;}
+
+  /* ---------- BOARD (full-screen, tight grid like real Jeopardy) ---------- */
+  #board-screen{background:#000;}
+  #board{
+    position:absolute;inset:0;
+    display:flex;
+    gap:8px;
+    padding:8px;
+    background:#000;
+  }
+  .board-col{flex:1;display:flex;flex-direction:column;gap:8px;min-width:0;}
+  .cat-cell{
+    background:var(--tile-blue);
+    flex:0 0 14vh;
+    display:flex;align-items:center;justify-content:center;text-align:center;
+    padding:.4vh .4vw;
+    font-size:1.7vw;font-weight:900;text-transform:uppercase;
+    color:#fff;text-shadow:2px 2px 0 #000;line-height:1.05;
+    font-family:'Arial Black',sans-serif;
+  }
+  .clue-cell{
+    background:var(--tile-blue);
+    flex:1;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+    font-family:'Impact','Arial Black',sans-serif;
+    font-size:5vw;color:var(--gold);
+    text-shadow:5px 5px 0 rgba(0,0,0,.55),2px 2px 0 #000;
+    transition:filter .12s,transform .1s;
+  }
+  .clue-cell:hover{filter:brightness(1.35);}
+  .clue-cell.used{color:transparent;text-shadow:none;cursor:default;pointer-events:none;}
+
+  /* floating round controls */
+  .nav{position:fixed;top:10px;right:14px;display:flex;gap:8px;z-index:30;}
+  .nav .btn{font-size:1.15vw;padding:.8vh 1.4vw;opacity:.92;}
+
+  /* home logo (top-left) */
+  .logo{
+    position:fixed;top:8px;left:14px;z-index:30;cursor:pointer;
+    font-family:'Impact','Arial Black',sans-serif;
+    font-size:2vw;color:var(--light-gold);
+    text-shadow:3px 3px 0 #000;transform:skewX(-6deg);
+    letter-spacing:.01em;transition:transform .1s,filter .12s;
+  }
+  .logo:hover{filter:brightness(1.2);transform:skewX(-6deg) scale(1.05);}
+  .logo:active{transform:skewX(-6deg) scale(.97);}
+
+  /* ---------- CLUE ---------- */
+  #clue-screen{background:var(--tile-blue);cursor:pointer;
+    flex-direction:column;align-items:center;justify-content:center;padding:4vh 5vw;}
+  .clue-inner{width:92%;max-width:1500px;text-align:center;}
+  .clue-value{font-size:3vw;color:var(--light-gold);font-family:'Impact',sans-serif;
+    margin-bottom:3vh;text-shadow:3px 3px 0 #000;}
+  .clue-cat{font-size:1.7vw;text-transform:uppercase;letter-spacing:.2em;color:#cdd2ff;margin-bottom:4vh;}
+  .clue-text{font-size:4.4vw;line-height:1.15;text-transform:uppercase;
+    text-shadow:3px 3px 4px #000;font-family:'Arial Black',sans-serif;}
+  .answer-label{font-size:1.4vw;color:#cdd2ff;letter-spacing:.2em;text-transform:uppercase;
+    margin-top:5vh;display:none;}
+  .answer-label.show{display:block;}
+  .answer-text{font-size:4vw;line-height:1.2;color:var(--light-gold);text-transform:uppercase;
+    text-shadow:3px 3px 4px #000;margin-top:1.5vh;display:none;}
+  .answer-text.show{display:block;animation:pop .25s ease;}
+  @keyframes pop{from{transform:scale(.85);opacity:0;}to{transform:scale(1);opacity:1;}}
+  .hint{position:fixed;bottom:2vh;left:0;right:0;text-align:center;font-size:1.1vw;
+    color:rgba(255,255,255,.55);letter-spacing:.15em;text-transform:uppercase;
+    font-family:Arial,sans-serif;pointer-events:none;}
+
+  /* DAILY DOUBLE */
+  .dd-splash{position:fixed;inset:0;background:var(--tile-blue);display:none;
+    align-items:center;justify-content:center;z-index:50;cursor:pointer;}
+  .dd-splash.show{display:flex;animation:ddflash .5s ease;}
+  @keyframes ddflash{0%{filter:brightness(2);}100%{filter:brightness(1);}}
+  .dd-splash h2{font-size:9vw;color:var(--light-gold);font-family:'Impact',sans-serif;
+    text-shadow:5px 5px 0 #000;transform:skewX(-6deg);text-align:center;line-height:.95;}
+
+  /* FINAL */
+  #final-screen{background:var(--tile-blue);cursor:pointer;text-align:center;
+    flex-direction:column;align-items:center;justify-content:center;padding:4vh 5vw;}
+  #final-screen .fj-title{font-size:5vw;color:var(--light-gold);font-family:'Impact',sans-serif;
+    text-shadow:4px 4px 0 #000;transform:skewX(-5deg);margin-bottom:4vh;}
+  #final-screen .clue-text{font-size:3.6vw;}
+  .timer{position:fixed;top:3vh;right:3vw;font-size:4vw;color:var(--light-gold);
+    font-family:'Impact',sans-serif;text-shadow:2px 2px 0 #000;display:none;}
+  .timer.show{display:block;animation:tick 1s ease-in-out infinite;}
+  @keyframes tick{0%,100%{transform:scale(1);}50%{transform:scale(1.18);}}
+  .fj-bar-wrap{position:fixed;bottom:0;left:0;right:0;height:1.4vh;
+    background:rgba(0,0,0,.4);display:none;z-index:20;}
+  .fj-bar-wrap.show{display:block;}
+  .fj-bar{height:100%;width:100%;
+    background:linear-gradient(90deg,#FFCC00,#D4A45E);}
+  /* suspense pulse on the clue while the clock runs */
+  #final-screen.thinking{animation:think 2s ease-in-out infinite;}
+  @keyframes think{0%,100%{background:var(--tile-blue);}50%{background:#0a18b8;}}
+</style>
+</head>
+<body>
+
+<!-- TITLE -->
+<div id="title" class="screen active">
+  <h1>JEOPARDY!</h1>
+  <div class="sub">Sarma &amp; Padma's 60th Anniversary</div>
+  <button class="btn" onclick="startGame()">Let's Play!</button>
+</div>
+
+<!-- BOARD -->
+<div id="board-screen" class="screen">
+  <div class="logo" onclick="goHome()" title="Back to start">JEOPARDY!</div>
+  <div class="nav">
+    <button class="btn" onclick="goFinal()">Final Jeopardy</button>
+  </div>
+  <div id="board"></div>
+</div>
+
+<!-- CLUE -->
+<div id="clue-screen" class="screen" onclick="advanceClue()">
+  <div class="clue-inner">
+    <div class="clue-value" id="clue-value">$200</div>
+    <div class="clue-cat" id="clue-cat"></div>
+    <div class="clue-text" id="clue-text"></div>
+    <div class="answer-label" id="answer-label">Answer</div>
+    <div class="answer-text" id="answer-text"></div>
+  </div>
+  <div class="hint" id="clue-hint">Click anywhere to reveal the answer</div>
+</div>
+
+<!-- DAILY DOUBLE -->
+<div class="dd-splash" id="dd-splash" onclick="dismissDD(event)"><h2>DAILY<br>DOUBLE!</h2></div>
+
+<!-- FINAL -->
+<div id="final-screen" class="screen" onclick="advanceFinal()">
+  <div class="timer" id="fj-timer">30</div>
+  <div class="fj-title" id="fj-title">Final Jeopardy</div>
+  <div class="clue-cat" id="fj-cat"></div>
+  <div class="clue-text" id="fj-text"></div>
+  <div class="answer-label" id="fj-answer-label">Answer</div>
+  <div class="answer-text" id="fj-answer"></div>
+  <div class="hint" id="fj-hint">Click anywhere to continue</div>
+  <div class="fj-bar-wrap" id="fj-bar-wrap"><div class="fj-bar" id="fj-bar"></div></div>
+</div>
+
+<script>
+/* =========================================================
+   GAME DATA — straight from the sheet, 4 clues per category.
+   answer:"" = blank on the sheet (host fills in live).
+   ========================================================= */
+const ROUNDS = [
+  {
+    name:"Jeopardy!",
+    values:[200,400,600,800],
+    categories:[
+      { title:"The 60s", clues:[
+        {q:"Where did Sarma take Padma for their first date?", a:"To a movie"},
+        {q:"What was Ammamma's dream profession?", a:"Being a doctor"},
+        {q:"Other than India, what country did Sarma study in before getting married?", a:"The Soviet Union"},
+      ]},
+      { title:"The 70s", clues:[
+        {q:"What year did Sarma come to the US?", a:"1970"},
+        {q:"How much money did Sarma come to the US with?", a:"$11 USD"},
+        {q:"Where did Sarma stay his very first night in the US?", a:"New York City"},
+        {q:"Name one job Sarma had this decade other than being an engineer.", a:"Math teacher, TV salesman, grocery bagger, or worked in the library"},
+      ]},
+      { title:"The 80s", clues:[
+        {q:"What car did Thatha gift Ammamma?", a:"A Chevy Malibu"},
+        {q:"Where did the family take Tatagarru &amp; Nannamma on their first big US trip in 1983?", a:"Las Vegas and California"},
+        {q:"What is the biggest annual trip for the Ayyala family?", a:"The Pittsburgh Temple"},
+      ]},
+      { title:"The 90s / 00s", clues:[
+        {q:"What year did Sarma and Padma move into 6 Drexel Hill Drive?", a:"1991"},
+        {q:"Who in the family gave Padma a ride to work?", a:"Diwaker"},
+        {q:"What is the only type of restaurant the family would eat at on vacations?", a:"Pizza Hut / Pizzeria Uno"},
+      ]},
+      { title:"Sarma or Padma?", clues:[
+        {q:'"God gave you two hands." — Who said it?', a:"Sarma"},
+        {q:'"Did you already finish eating?" — Who said it?', a:"Padma"},
+        {q:"Whose birthdate was changed for educational purposes?", a:"Sarma — born in '41 but recorded as '40"},
+        {q:"Who is the boss?", a:"Padma"},
+      ]},
+    ]
+  }
+];
+
+const FINAL = {
+  category:"Nicknames",
+  q:"Name all 3 of Sarma's nicknames.",
+  a:"Bobby, Gaga &amp; Thatha<br><span style='font-size:.6em;color:#cdd2ff'>Bonus: Ammamma's nickname = ______</span>"
+};
+
+/* ================= ENGINE ================= */
+let roundIdx=0, clueStage=0, currentCell=null, pendingClue=null, fjStage=0, fjTimerInt=null;
+const $=id=>document.getElementById(id);
+
+let actx=null;
+function beep(freq,dur,type='sine',vol=0.15){
+  try{
+    actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+    const o=actx.createOscillator(),g=actx.createGain();
+    o.type=type;o.frequency.value=freq;o.connect(g);g.connect(actx.destination);
+    g.gain.setValueAtTime(vol,actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001,actx.currentTime+dur);
+    o.start();o.stop(actx.currentTime+dur);
+  }catch(e){}
+}
+function dailyDoubleSound(){
+  beep(523,.12,'square');setTimeout(()=>beep(659,.12,'square'),120);
+  setTimeout(()=>beep(784,.12,'square'),240);setTimeout(()=>beep(1047,.25,'square'),360);
+}
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  $(id).classList.add('active');
+}
+function startGame(){roundIdx=0;buildBoard();showScreen('board-screen');}
+function goHome(){stopFinalTimer();showScreen('title');}
+
+function buildBoard(){
+  const round=ROUNDS[roundIdx];
+  const board=$('board');
+  board.innerHTML='';
+  round.categories.forEach((cat,catIdx)=>{
+    const col=document.createElement('div');
+    col.className='board-col';
+    const head=document.createElement('div');
+    head.className='cat-cell';head.innerHTML=cat.title;
+    col.appendChild(head);
+    cat.clues.forEach((clue,rowIdx)=>{
+      const val=round.values[rowIdx];
+      const cell=document.createElement('div');
+      cell.className='clue-cell';
+      cell.textContent='$'+val;
+      cell.onclick=()=>openClue(catIdx,rowIdx,val,cell);
+      col.appendChild(cell);
+    });
+    board.appendChild(col);
+  });
+}
+
+function openClue(catIdx,rowIdx,val,cell){
+  const cat=ROUNDS[roundIdx].categories[catIdx];
+  const clue=cat.clues[rowIdx];
+  currentCell=cell;pendingClue={clue,cat:cat.title,val};clueStage=0;
+  if(clue.dd){beep(440,.05);dailyDoubleSound();$('dd-splash').classList.add('show');}
+  else{beep(440,.08,'triangle',.12);revealClue();}
+}
+function dismissDD(e){if(e)e.stopPropagation();$('dd-splash').classList.remove('show');revealClue();}
+function revealClue(){
+  const {clue,cat,val}=pendingClue;
+  $('clue-value').textContent='$'+val;
+  $('clue-cat').textContent=cat;
+  $('clue-text').innerHTML=clue.q;
+  const ans=$('answer-text');
+  ans.innerHTML=clue.a&&clue.a.trim()?clue.a:"<span style='color:#9aa0ff'>(Answer to be filled in by host)</span>";
+  ans.classList.remove('show');$('answer-label').classList.remove('show');
+  $('clue-hint').textContent='Click anywhere to reveal the answer';
+  showScreen('clue-screen');
+}
+function advanceClue(){
+  if(clueStage===0){
+    $('answer-text').classList.add('show');$('answer-label').classList.add('show');
+    $('clue-hint').textContent='Click anywhere to return to the board';
+    beep(660,.12,'sine',.12);clueStage=1;
+  }else{
+    if(currentCell)currentCell.classList.add('used');
+    showScreen('board-screen');
+  }
+}
+function nextRound(){if(roundIdx<ROUNDS.length-1){roundIdx++;buildBoard();showScreen('board-screen');}}
+
+function goFinal(){
+  fjStage=0;
+  $('fj-cat').textContent='Category:';
+  $('fj-text').style.display='none';$('fj-text').innerHTML='';
+  $('fj-answer').classList.remove('show');$('fj-answer-label').classList.remove('show');
+  $('fj-hint').textContent='Click to reveal the category';
+  $('fj-timer').classList.remove('show');
+  showScreen('final-screen');
+}
+function advanceFinal(){
+  if(fjStage===0){$('fj-cat').textContent=FINAL.category;$('fj-hint').textContent='Click to reveal the clue';beep(523,.1);fjStage=1;}
+  else if(fjStage===1){$('fj-text').style.display='block';$('fj-text').innerHTML=FINAL.q;$('fj-hint').textContent='Click to reveal the answer';startFinalTimer();fjStage=2;}
+  else if(fjStage===2){stopFinalTimer();$('fj-answer').innerHTML=FINAL.a;$('fj-answer').classList.add('show');$('fj-answer-label').classList.add('show');$('fj-hint').textContent='Click to return to the board';beep(660,.15);fjStage=3;}
+  else{showScreen('board-screen');}
+}
+function startFinalTimer(){
+  let t=30;const el=$('fj-timer');el.textContent=t;el.classList.add('show');
+  $('final-screen').classList.add('thinking');
+  // animated shrinking bar
+  const wrap=$('fj-bar-wrap'),bar=$('fj-bar');
+  wrap.classList.add('show');
+  bar.style.transition='none';bar.style.width='100%';
+  void bar.offsetWidth;                       // force reflow
+  bar.style.transition='width 30s linear';
+  bar.style.width='0%';
+  fjTimerInt=setInterval(()=>{t--;el.textContent=t;
+    if(t<=5&&t>0)beep(880,.08,'square',.1);
+    if(t<=0){clearInterval(fjTimerInt);beep(220,.6,'sawtooth',.18);el.classList.remove('show');}
+  },1000);
+}
+function stopFinalTimer(){
+  if(fjTimerInt)clearInterval(fjTimerInt);
+  $('fj-timer').classList.remove('show');
+  $('fj-bar-wrap').classList.remove('show');
+  $('final-screen').classList.remove('thinking');
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){stopFinalTimer();$('dd-splash').classList.remove('show');showScreen('board-screen');}
+  else if(e.key===' '||e.key==='Enter'){e.preventDefault();
+    if($('clue-screen').classList.contains('active'))advanceClue();
+    else if($('final-screen').classList.contains('active'))advanceFinal();
+    else if($('dd-splash').classList.contains('show'))dismissDD();
+  }
+});
+</script>
+</body>
+</html>
